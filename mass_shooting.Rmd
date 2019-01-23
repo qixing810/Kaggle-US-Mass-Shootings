@@ -1,0 +1,292 @@
+#Mass Shooting Project
+
+**1.Load all the required libraries**
+```{r}
+library(data.table)
+library(leaflet)
+library(lubridate)
+library(magrittr)
+library(maps)
+library(plotly)
+library(stringr)
+library(tidyverse)
+```
+
+**2.Load & take a glimpse of the dataset**
+```{r}
+shoot <- read.csv("C:/SPS/projects/Mass Shootings Dataset Ver 5.csv",header=TRUE,stringsAsFactors=FALSE)
+head(shoot)
+glimpse(shoot)
+summary(shoot)
+```
+
+**3.Reconstruct the dataset**
+**3.1 Sepearte the *Location* into *City* and *State* two variables**
+```{r}
+shoot <- shoot %>% separate(Location,into = c("City","State"), sep = ", ",remove = FALSE)
+```
+
+From the warning messages, almost 15% of the samples in the column *Location* contain NA and the location of the incidents is not difficiult to figure out. So manually fill out those NA seems necessary. 
+```{r}
+shoot1 <- read.csv("C:/SPS/projects/Mass Shootings Dataset fixed.csv",header=TRUE,stringsAsFactors=FALSE)
+shoot1 <- shoot1 %>% 
+  separate(Location,into = c("City","State"), sep = ", ", remove = FALSE)
+```
+
+Abbreviations needed to be repleace by names of states.
+```{r}
+pattern <- c("CA|CO|LA|MD|NV|PA|TX|WA|VA")
+replacement <- c("California","Colorado","Louisiana","Maryland","Nevada","Pennsylvania","Texas","Washington","Virginia")
+shoot1$State <- shoot1$State %>%
+  str_replace_all(pattern = pattern, replacement = replacement)
+shoot1$State <- shoot1$State %>%
+  str_replace_all(c("Texas "="Texas"," Virginia"="Virginia"))
+```
+
+**3.2 Extract year and month from column *Date* **
+```{r}
+shoot1 <- shoot1 %>% 
+  mutate(Date=mdy(shoot1$Date),year=year(Date))
+shoot1 <- shoot1 %>% 
+  mutate(month=month(Date))
+shoot1 <- shoot1 %>%
+  mutate(decade = case_when(year >=1960 & year<1970 ~ "1960s",
+                            year >=1970 & year<1980 ~ "1970s",
+                            year >=1980 & year<1990 ~ "1990s",
+                            year >=1990 & year<2000 ~ "1990s",
+                            year >=2000 & year<2010 ~ "2000s",
+                            year >=2010 & year<2020 ~ "2010s"))
+```
+
+**3.3 Deal with column *Mental.Health.Issues* **
+```{r}
+shoot1$Mental.Health.Issues <- if_else(shoot1$Mental.Health.Issues=="unknown","Unknown",shoot1$Mental.Health.Issues)
+```
+
+**3.4 Deal with column *Race* **
+```{r}
+shoot1$Race <- if_else(str_detect(shoot1$Race,"Black American or African American"),"Black",shoot1$Race)
+shoot1$Race <- if_else(str_detect(shoot1$Race,"White American or European American"),"White",shoot1$Race)
+shoot1$Race <- if_else(str_detect(shoot1$Race,"Asian American"),"Asian",shoot1$Race)
+shoot1$Race <- if_else(shoot1$Race == "Some other race","Other",shoot1$Race)
+shoot1$Race <- if_else(shoot1$Race == "Two or more races","Other",shoot1$Race)
+shoot1$Race <- if_else(shoot1$Race == "Native American or Alaska Native","Native",shoot1$Race)
+shoot1$Race <- if_else(shoot1$Race == "","Other",shoot1$Race)
+shoot1$Race <- str_to_upper(shoot1$Race)
+```
+
+**3.5 Column *Gender* abbreviations needed to be repleace **
+```{r}
+shoot1$Gender <- if_else(shoot1$Gender=="M","Male",shoot1$Gender)
+shoot1$Gender <- if_else(shoot1$Gender=="F","Female",shoot1$Gender)
+shoot1$Gender <- if_else(shoot1$Gender=="M/F","Male/Female",shoot1$Gender)
+```
+
+**3.6 Deal with column *Cause* **
+```{r}
+shoot1$Cause <- if_else(shoot1$Cause=="","unknown",shoot1$Cause)
+```
+
+**3.7 Deal with column *Age* **
+```{r}
+temp <- shoot1 %>%
+  separate_rows(Age,sep=",") %>%
+  select(Age) %<>%
+  mutate(Age = cut(as.integer(Age),breaks = c(10,20,30,40,50,60,70),
+                   labels=c("10-20","20-30","30-40","40-50","50-60","60-70"))) %>%
+  na.omit()
+```
+
+**4 Exploratory Data Analysis**
+**4.1 Analyze the trend by year**
+**Victims by year**
+```{r}
+victims_year <- shoot1 %>%
+  group_by(year) %>%
+  summarise(total=sum(Total.victims)) %>%
+  ggplot(aes(x=year,y=total))+
+  geom_bar(stat = 'identity',fill='blue')+
+  labs(title = "US Mass Shooting Victims from 1966 to 2017",
+       xlab = "year", ylab = "Number of Victims")
+ggplotly(victims_year)
+```
+
+**Incidents by year**
+```{r}
+incidents_year <- shoot1 %>%
+  group_by(year) %>%
+  count() %>%
+  ggplot(aes(x=year,y=n))+
+  geom_bar(stat = 'identity',fill='blue')+
+  labs(title = "US Mass Shooting Incidents from 1966 to 2017")+
+  xlab("Year")+
+  ylab("Number of Incidents")
+ggplotly(incidents_year)
+```
+
+**Incidents by month**
+```{r}
+incidents_month <- shoot1 %>%
+  group_by(month) %>%
+  count() %>%
+  ggplot(aes(x=factor(month),y=n))+
+  geom_bar(stat = 'identity',fill='blue')+
+  labs(title = "Incidents happened by month ")+
+  xlab("Month")+
+  ylab("Number of Incidents")
+ggplotly(incidents_month)
+```
+
+**4.2 Analyze the distribution of the incidents **
+**The 10 states have the most incidents**
+```{r}
+incidents_states <- shoot1 %>%
+  group_by(State) %>%
+  count() %>%
+  arrange(desc(n)) %>%
+  head(10) %>%
+  ggplot(aes(x=reorder(State,n),y=n))+
+  geom_bar(stat = 'identity',aes(fill = State))+
+  geom_text(aes(label=n),hjust=-0.1)+
+  labs(title = "The 10 states have the most incidents")+
+  xlab("State")+
+  ylab("Number of Incidents")+
+  theme(legend.position='none')+
+  coord_flip()
+ggplotly(incidents_states)
+```
+
+**Analyze incidents in maps**
+```{r}
+incid_states <- shoot1 %>%
+  group_by(State) %>%
+  count() 
+colnames(incid_states)<-c("region","Incidents")
+incid_states$region <- str_to_lower(incid_states$region)
+
+states <- map_data("state")  
+
+comb <- states %>%
+  left_join(incid_states,by="region")
+
+incident_map <- comb %>% 
+  ggplot() + 
+  geom_polygon(aes(x = long, y = lat, group = group,fill = Incidents))+ 
+  geom_point(data=shoot1,aes(x=Longitude,y=Latitude,size=Total.victims),color='red',alpha=0.5)+
+  xlim(-130,-65)+
+  ylim(25,50)
+ggplotly(incident_map)
+```
+
+**Further analyze total victims in maps**
+```{r}
+shoot1 %>%
+  leaflet() %>%
+  addProviderTiles(providers$OpenStreetMap) %>%
+  fitBounds(-124,30,-66,43) %>%
+  addCircles(color = "blue",lng = ~Longitude,lat = ~Latitude,weight = 1,
+             radius = ~sqrt(Total.victims) * 25000,popup = ~Summary)
+  
+```
+
+**Click to see details in maps**
+```{r}
+shoot1 %>%
+  leaflet() %>%
+  fitBounds(-124,30,-66,43) %>%
+  addProviderTiles(providers$CartoDB.DarkMatter, group="Dark") %>%
+  addProviderTiles(providers$CartoDB.Positron, group="Light") %>%
+  addLayersControl(baseGroups=c('Dark','Light')) %>%
+  addTiles() %>%
+  addMarkers(~Longitude, ~Latitude, 
+             clusterOptions = markerClusterOptions(),
+             popup = ~Summary,
+             label = ~Location)
+```
+
+
+**Analyze the characters of the shooters**
+**Race of the shooter**
+```{r}
+shoot1 %>%
+  group_by(Race) %>%
+  summarise(total=sum(Total.victims)) %>%
+  plot_ly(labels= ~Race,values= ~total, type="pie") %>%
+  layout(title = 'Race of the shooter')
+```
+
+**The Ratio of the race of the shooter**
+```{r}
+trend_race <- shoot1 %>%
+  group_by(decade) %>%
+  ggplot(aes(x=decade,fill=Race))+
+  geom_histogram(stat="count",position="fill")+
+  labs(title = "Ratio of the race")+
+  xlab("Decade")+
+  ylab("Ratio")
+ggplotly(trend_race)
+```
+
+**Gender of the shooter**
+```{r}
+shoot1 %>%
+  group_by(Gender) %>%
+  count() %>%
+  plot_ly(labels= ~Gender,values= ~n, type="pie") %>%
+  layout(title = 'Gender of the shooter')
+```
+
+**Motive of the shooter**
+```{r}
+cause_shoot <- shoot1 %>%
+  group_by(Cause) %>%
+  count() %>%
+  arrange(desc(n)) %>%
+  ggplot(aes(x=reorder(Cause,n),y=n))+
+  geom_bar(stat = 'identity',aes(fill = Cause))+
+  labs(title = "Motive of the shooter")+
+  xlab("Cause")+
+  ylab("")+
+  theme(legend.position='none')+
+  coord_flip()
+ggplotly(cause_shoot)
+```
+
+**Mental Status of the shooter**
+```{r}
+shoot1 %>%
+  group_by(Mental.Health.Issues) %>%
+  count() %>%
+  plot_ly(labels= ~Mental.Health.Issues,values= ~n, type="pie") %>%
+  layout(title = 'Mental Status of the shooter')
+```
+
+**Age of the shooter**
+```{r}
+age_shoot <- temp %>%
+  group_by(Age) %>%
+  count() %>%
+  ggplot(aes(x=Age,y=n))+
+  geom_bar(stat = 'identity',aes(fill = Age))+
+  labs(title = "Age of the shooter")+
+  xlab("Age")+
+  ylab("Number of shooters")+
+  theme(legend.position='none')
+ggplotly(age_shoot)
+```
+
+**Age Distribution**
+```{r}
+age_dis <- shoot1 %>%
+  ggplot(aes(x=decade,y=as.numeric(Age),fill=decade))+
+  geom_boxplot()+
+  labs(title = "Age Distribution")+
+  xlab("")+
+  ylab("Age")+
+  theme(legend.position='none')
+ggplotly(age_dis)
+```
+
+
+
+
