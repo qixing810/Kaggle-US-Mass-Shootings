@@ -163,7 +163,6 @@ incidents_states <- shoot1 %>%
   head(10) %>%
   ggplot(aes(x=reorder(State,n),y=n))+
   geom_bar(stat = 'identity',aes(fill = State))+
-  geom_text(aes(label=n),hjust=-0.1)+
   labs(title = "The 10 states have the most incidents")+
   xlab("State")+
   ylab("Number of Incidents")+
