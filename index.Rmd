@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ##1.Introduction
 As the most mass shooting country in the world, United States suffered at least 15 mass shooting in the past decade. According to Wikipedia, 305 people died and more than 1100 were injured in those shooting. On the night of October 1, 2017, a gunman opened fire on a crowd attending the final night of a country music festival in Las Vegas, killing 58 people and injuring more than 800. This shooting is the worst mass shooting in modern history of the United States.
 
-The gun control issue has always been debated for a long time, probably ever since they were invented.However, the project isn't about to argue about the gun control issue or Second Amendment, the purpose of the project is more about to gain some statistic insights on mass shootings and have a better understanding of relationships between characteristics of the shooters and the incidents by performing spatial and statistical analysis on mass shooting dataset from Kaggle.
+The gun control issue has always been debated for a long time, probably ever since they were invented.However, the project isn't about arguing the gun control issue or Second Amendment, the purpose of the project is only about to gain some statistic insights on these mass shooting incidents and get a better understanding of the relationships between characteristics of the shooters and the incidents by performing some spatial and statistical analysis on the mass shooting dataset from [Kaggle](https://www.kaggle.com/zusmani/us-mass-shootings-last-50-years). The dataset is also avaiable in my [Github](https://github.com/qixing810/Kaggle-US-Mass-Shootings).
 
 
 ##2.Methodology
