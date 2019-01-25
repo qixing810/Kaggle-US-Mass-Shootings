@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE,message=FALSE, warning=FALSE)
 ```
 
 ##1.Introduction
@@ -17,7 +17,7 @@ The gun control issue has always been debated for a long time, probably ever sin
 
 ##2.Methodology
 **1.Load all the required libraries**
-```{r message=FALSE, warning=FALSE}
+```{r}
 library(data.table)
 library(leaflet)
 library(lubridate)
@@ -29,7 +29,7 @@ library(tidyverse)
 ```
 
 **2.Load & take a glimpse of the dataset**
-```{r message=FALSE, warning=FALSE}
+```{r}
 shoot <- read.csv("C:/SPS/projects/Mass Shootings Dataset Ver 5.csv",header=TRUE,stringsAsFactors=FALSE)
 head(shoot)
 glimpse(shoot)
@@ -38,19 +38,19 @@ summary(shoot)
 
 **3.Reconstruct the dataset**
 **3.1 Sepearte the *Location* into *City* and *State* two variables**
-```{r message=FALSE, warning=FALSE}
+```{r}
 shoot <- shoot %>% separate(Location,into = c("City","State"), sep = ", ",remove = FALSE)
 ```
 
 From the warning messages, almost 15% of the samples in the column *Location* contain NA and the location of the incidents is not difficiult to figure out. So manually fill out those NA seems necessary. 
-```{r message=FALSE, warning=FALSE}
+```{r}
 shoot1 <- read.csv("C:/SPS/projects/Mass Shootings Dataset fixed.csv",header=TRUE,stringsAsFactors=FALSE)
 shoot1 <- shoot1 %>% 
   separate(Location,into = c("City","State"), sep = ", ", remove = FALSE)
 ```
 
 Abbreviations needed to be repleace by names of states.
-```{r message=FALSE, warning=FALSE}
+```{r}
 pattern <- c("CA|CO|LA|MD|NV|PA|TX|WA|VA")
 replacement <- c("California","Colorado","Louisiana","Maryland","Nevada","Pennsylvania","Texas","Washington","Virginia")
 shoot1$State <- shoot1$State %>%
@@ -60,7 +60,7 @@ shoot1$State <- shoot1$State %>%
 ```
 
 **3.2 Extract year and month from column *Date* **
-```{r message=FALSE, warning=FALSE}
+```{r}
 shoot1 <- shoot1 %>% 
   mutate(Date=mdy(shoot1$Date),year=year(Date))
 shoot1 <- shoot1 %>% 
@@ -75,12 +75,12 @@ shoot1 <- shoot1 %>%
 ```
 
 **3.3 Deal with column *Mental.Health.Issues* **
-```{r message=FALSE, warning=FALSE}
+```{r}
 shoot1$Mental.Health.Issues <- if_else(shoot1$Mental.Health.Issues=="unknown","Unknown",shoot1$Mental.Health.Issues)
 ```
 
 **3.4 Deal with column *Race* **
-```{r message=FALSE, warning=FALSE}
+```{r}
 shoot1$Race <- if_else(str_detect(shoot1$Race,"Black American or African American"),"Black",shoot1$Race)
 shoot1$Race <- if_else(str_detect(shoot1$Race,"White American or European American"),"White",shoot1$Race)
 shoot1$Race <- if_else(str_detect(shoot1$Race,"Asian American"),"Asian",shoot1$Race)
@@ -92,19 +92,19 @@ shoot1$Race <- str_to_upper(shoot1$Race)
 ```
 
 **3.5 Column *Gender* abbreviations needed to be repleace **
-```{r message=FALSE, warning=FALSE}
+```{r}
 shoot1$Gender <- if_else(shoot1$Gender=="M","Male",shoot1$Gender)
 shoot1$Gender <- if_else(shoot1$Gender=="F","Female",shoot1$Gender)
 shoot1$Gender <- if_else(shoot1$Gender=="M/F","Male/Female",shoot1$Gender)
 ```
 
 **3.6 Deal with column *Cause* **
-```{r message=FALSE, warning=FALSE}
+```{r}
 shoot1$Cause <- if_else(shoot1$Cause=="","unknown",shoot1$Cause)
 ```
 
 **3.7 Deal with column *Age* **
-```{r message=FALSE, warning=FALSE}
+```{r}
 temp <- shoot1 %>%
   separate_rows(Age,sep=",") %>%
   select(Age) %<>%
@@ -116,7 +116,7 @@ temp <- shoot1 %>%
 **4 Exploratory Data Analysis**
 **4.1 Analyze the trend by year**
 **Victims by year**
-```{r message=FALSE, warning=FALSE}
+```{r}
 victims_year <- shoot1 %>%
   group_by(year) %>%
   summarise(total=sum(Total.victims)) %>%
@@ -128,7 +128,7 @@ ggplotly(victims_year)
 ```
 
 **Incidents by year**
-```{r message=FALSE, warning=FALSE}
+```{r}
 incidents_year <- shoot1 %>%
   group_by(year) %>%
   count() %>%
@@ -141,7 +141,7 @@ ggplotly(incidents_year)
 ```
 
 **Incidents by month**
-```{r message=FALSE, warning=FALSE}
+```{r}
 incidents_month <- shoot1 %>%
   group_by(month) %>%
   count() %>%
@@ -155,7 +155,7 @@ ggplotly(incidents_month)
 
 **4.2 Analyze the distribution of the incidents **
 **The 10 states have the most incidents**
-```{r message=FALSE, warning=FALSE}
+```{r}
 incidents_states <- shoot1 %>%
   group_by(State) %>%
   count() %>%
@@ -172,7 +172,7 @@ ggplotly(incidents_states)
 ```
 
 **Analyze incidents in maps**
-```{r message=FALSE, warning=FALSE}
+```{r}
 incid_states <- shoot1 %>%
   group_by(State) %>%
   count() 
@@ -194,7 +194,7 @@ ggplotly(incident_map)
 ```
 
 **Further analyze total victims in maps**
-```{r message=FALSE, warning=FALSE}
+```{r}
 shoot1 %>%
   leaflet() %>%
   addProviderTiles(providers$OpenStreetMap) %>%
@@ -205,7 +205,7 @@ shoot1 %>%
 ```
 
 **Click to see details in maps**
-```{r message=FALSE, warning=FALSE}
+```{r}
 shoot1 %>%
   leaflet() %>%
   fitBounds(-124,30,-66,43) %>%
@@ -222,7 +222,7 @@ shoot1 %>%
 
 **Analyze the characters of the shooters**
 **Race of the shooter**
-```{r message=FALSE, warning=FALSE}
+```{r}
 shoot1 %>%
   group_by(Race) %>%
   summarise(total=sum(Total.victims)) %>%
@@ -303,8 +303,10 @@ ggplotly(age_dis)
 ```
 
 
+### Reference:
+Samriddhi S. 2016. NYC Data Science Academy: Analyzing Mass Shooting in US. https://nycdatascience.com/blog/student-works/r-visualization/mass-shooting-us/
 
-
+Bonnie Berkowitz, Denise Lu and Chris Alcantara. 2018. The Washington Post: The terrible numbers that grow with each mass shooting. https://www.washingtonpost.com/graphics/2018/national/mass-shootings-in-america/
 
 
 
