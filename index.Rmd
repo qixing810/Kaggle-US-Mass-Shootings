@@ -223,11 +223,16 @@ shoot1 %>%
 **Analyze the characters of the shooters**
 **Race of the shooter**
 ```{r}
-shoot1 %>%
+shooters_race <- shoot1 %>%
   group_by(Race) %>%
   summarise(total=sum(Total.victims)) %>%
-  plot_ly(labels= ~Race,values= ~total, type="pie") %>%
-  layout(title = 'Race of the shooter')
+  ggplot(aes(x=reorder(Race,total),y=total))+
+  geom_bar(stat = 'identity',aes(fill = Race))+
+  labs(title = 'Race of the shooter')+
+  xlab("Race")+
+  ylab("Number")+
+  theme(legend.position='none')
+ggplotly(shooters_race)
 ```
 
 **The Ratio of the race of the shooter**
@@ -243,16 +248,22 @@ ggplotly(trend_race)
 ```
 
 **Gender of the shooter**
-```{r message=FALSE, warning=FALSE}
-shoot1 %>%
+```{r}
+shooters_gender <- shoot1 %>%
   group_by(Gender) %>%
   count() %>%
-  plot_ly(labels= ~Gender,values= ~n, type="pie") %>%
-  layout(title = 'Gender of the shooter')
+  ggplot(aes(x=reorder(Gender,n),y=n))+
+  geom_bar(stat = 'identity',aes(fill = Gender))+
+  labs(title = 'Gender of the shooter')+
+  xlab("Gender")+
+  ylab("Number")+
+  coord_flip()+
+  theme(legend.position='none')
+ggplotly(shooters_gender)
 ```
 
 **Motive of the shooter**
-```{r message=FALSE, warning=FALSE}
+```{r}
 cause_shoot <- shoot1 %>%
   group_by(Cause) %>%
   count() %>%
@@ -268,16 +279,21 @@ ggplotly(cause_shoot)
 ```
 
 **Mental Status of the shooter**
-```{r message=FALSE, warning=FALSE}
-shoot1 %>%
+```{r}
+shooters_mental <- shoot1 %>%
   group_by(Mental.Health.Issues) %>%
   count() %>%
-  plot_ly(labels= ~Mental.Health.Issues,values= ~n, type="pie") %>%
-  layout(title = 'Mental Status of the shooter')
+  ggplot(aes(x=reorder(Mental.Health.Issues,n),y=n))+
+  geom_bar(stat = 'identity',aes(fill = Mental.Health.Issues))+
+  labs(title = 'Mental Status of the shooter')+
+  xlab("Mental Status")+
+  ylab("Number")+
+  theme(legend.position='none')
+ggplotly(shooters_mental)
 ```
 
 **Age of the shooter**
-```{r message=FALSE, warning=FALSE}
+```{r}
 age_shoot <- temp %>%
   group_by(Age) %>%
   count() %>%
@@ -291,7 +307,7 @@ ggplotly(age_shoot)
 ```
 
 **Age Distribution**
-```{r message=FALSE, warning=FALSE}
+```{r}
 age_dis <- shoot1 %>%
   ggplot(aes(x=decade,y=as.numeric(Age),fill=decade))+
   geom_boxplot()+
