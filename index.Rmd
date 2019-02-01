@@ -5,6 +5,8 @@ date: "January 2, 2019"
 output: html_document
 ---
 
+![](featured.jpg)
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE,message=FALSE, warning=FALSE)
 ```
